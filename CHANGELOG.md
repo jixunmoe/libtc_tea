@@ -15,5 +15,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support both CBC & EBC mode for `tc_tea`.
 
 [libparakeet]: https://github.com/parakeet-rs/libparakeet
-[0.1.0]: https://github.com/parakeet-rs/libparakeet/commits/v0.1.0
-[0.2.0]: https://github.com/parakeet-rs/libparakeet/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/jixunmoe/libtc_tea/commits/v0.1.0
+[0.2.0]: https://github.com/jixunmoe/libtc_tea/compare/v0.1.0...v0.2.0
