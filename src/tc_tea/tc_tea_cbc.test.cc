@@ -23,10 +23,11 @@ TEST(TC_TEA_CBC, BasicDecryptionTest) {
 TEST(TC_TEA_CBC, BasicEncryptionTest) {
     auto key = std::bit_cast<std::array<uint8_t, 16>>(
         std::to_array<uint8_t>({'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'}));
-    auto plain = std::bit_cast<std::array<uint8_t, 8>>(std::to_array<uint8_t>({1, 2, 3, 4, 5, 6, 7, 8}));
+    auto plain = std::bit_cast<std::array<uint8_t, 16>>(
+        std::to_array<uint8_t>({1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18}));
 
     auto cipher = tc_tea::CBC_Encrypt(plain, key);
-    ASSERT_EQ(cipher.size(), 24);
+    ASSERT_EQ(cipher.size(), 32);
 
     auto actual_decrypted = tc_tea::CBC_Decrypt(cipher, key);
     ASSERT_THAT(actual_decrypted, ElementsAreArray(plain))

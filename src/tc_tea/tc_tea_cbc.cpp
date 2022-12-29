@@ -82,7 +82,7 @@ bool CBC_Encrypt(std::vector<uint8_t>& cipher, std::span<const uint8_t> plain, s
     utils::GenerateRandomBytes(std::span{p_cipher.data(), header_size});
 
     p_cipher[0] = (p_cipher[0] & uint8_t{0b1111'1000}) | static_cast<uint8_t>(pad_len & 0b0000'0111);
-    std::copy_n(plain.begin(), 8, &p_cipher[header_size]);
+    std::ranges::copy(plain.begin(), plain.end(), &p_cipher[header_size]);
 
     // Process first block
     std::array<uint8_t, 8> iv2;
