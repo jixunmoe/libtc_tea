@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "xaver.clang-format",
+        "sonarsource.sonarlint-vscode",
+        "ms-vscode.cpptools-extension-pack"
+    ]
+}
