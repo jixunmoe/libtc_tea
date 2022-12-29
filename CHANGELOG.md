@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2022-12-29
+
 ### Added
 
--   Source import from [libparakeet].
+- Source import from [libparakeet].
+- Support both CBC & EBC mode for `tc_tea`.
 
 [libparakeet]: https://github.com/parakeet-rs/libparakeet
 [0.1.0]: https://github.com/parakeet-rs/libparakeet/commits/v0.1.0
