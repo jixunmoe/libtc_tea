@@ -25,7 +25,7 @@ file(GLOB_RECURSE SOURCES
 
 # Add source to this project's executable.
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
-add_library("JixunMoe::${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+add_library("JixunMoe::LibTcTEA" ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC 
