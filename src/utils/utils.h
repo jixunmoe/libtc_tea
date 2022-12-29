@@ -28,7 +28,7 @@ inline void ParseBigEndianKey(std::span<uint32_t, 4> result, std::span<const uin
 
 inline void GenerateRandomBytes(std::span<uint8_t> data) {
     using random_bytes_engine =
-        std::independent_bits_engine<std::default_random_engine, std::numeric_limits<uint8_t>::digits, uint8_t>;
+        std::independent_bits_engine<std::default_random_engine, std::numeric_limits<uint8_t>::digits, unsigned short>;
 
     std::random_device rd;
     random_bytes_engine rbe(rd());
