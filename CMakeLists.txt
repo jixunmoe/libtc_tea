@@ -35,7 +35,7 @@ target_include_directories(${PROJECT_NAME}
     src
     "${PROJECT_BINARY_DIR}/src"
 )
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 include(GNUInstallDirs)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
@@ -73,7 +73,7 @@ if(TC_TEA_BUILD_TESTING)
   file(GLOB_RECURSE TESTS_SOURCE src/*.test.cc src/*.test.hh)
   add_executable(${PROJECT_NAME}_test ${TESTS_SOURCE})
   target_include_directories(${PROJECT_NAME}_test PRIVATE src)
-  target_compile_features(${PROJECT_NAME}_test PRIVATE cxx_std_20)
+  target_compile_features(${PROJECT_NAME}_test PRIVATE cxx_std_17)
   target_link_libraries(${PROJECT_NAME}_test 
     GTest::gmock
     GTest::gtest

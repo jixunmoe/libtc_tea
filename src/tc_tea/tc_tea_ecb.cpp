@@ -3,7 +3,6 @@
 #include "utils/EndianHelper.h"
 
 #include <algorithm>
-#include <span>
 
 namespace tc_tea {
 constexpr uint32_t TEA_ECB_ROUNDS = 16;
@@ -13,9 +12,9 @@ inline auto single_round_tea(uint32_t value, uint32_t sum, uint32_t key1, uint32
     return ((value << 4) + key1) ^ (value + sum) ^ ((value >> 5) + key2);
 }
 
-void ECB_DecryptBlock(std::span<uint8_t, 8> block, std::span<const uint32_t, 4> key) {
-    uint32_t y = utils::BigEndianToU32(std::span<uint8_t, 4>{&block[0], 4});
-    uint32_t z = utils::BigEndianToU32(std::span<uint8_t, 4>{&block[4], 4});
+void ECB_DecryptBlock(uint8_t* block, const uint32_t* key) {
+    uint32_t y = utils::BigEndianToU32(&block[0]);
+    uint32_t z = utils::BigEndianToU32(&block[4]);
     uint32_t sum = TEA_ECB_DELTA * TEA_ECB_ROUNDS;
 
     for (int i = 0; i < TEA_ECB_ROUNDS; i++) {
@@ -24,13 +23,13 @@ void ECB_DecryptBlock(std::span<uint8_t, 8> block, std::span<const uint32_t, 4> 
         sum -= TEA_ECB_DELTA;
     }
 
-    utils::U32ToBigEndian(std::span<uint8_t, 4>{&block[0], 4}, y);
-    utils::U32ToBigEndian(std::span<uint8_t, 4>{&block[4], 4}, z);
+    utils::U32ToBigEndian(&block[0], y);
+    utils::U32ToBigEndian(&block[4], z);
 }
 
-void ECB_EncryptBlock(std::span<uint8_t, 8> block, std::span<const uint32_t, 4> key) {
-    uint32_t y = utils::BigEndianToU32(std::span<uint8_t, 4>{&block[0], 4});
-    uint32_t z = utils::BigEndianToU32(std::span<uint8_t, 4>{&block[4], 4});
+void ECB_EncryptBlock(uint8_t* block, const uint32_t* key) {
+    uint32_t y = utils::BigEndianToU32(&block[0]);
+    uint32_t z = utils::BigEndianToU32(&block[4]);
     uint32_t sum = 0;
 
     for (int i = 0; i < TEA_ECB_ROUNDS; i++) {
@@ -40,8 +39,8 @@ void ECB_EncryptBlock(std::span<uint8_t, 8> block, std::span<const uint32_t, 4> 
         z += single_round_tea(y, sum, key[2], key[3]);
     }
 
-    utils::U32ToBigEndian(std::span<uint8_t, 4>{&block[0], 4}, y);
-    utils::U32ToBigEndian(std::span<uint8_t, 4>{&block[4], 4}, z);
+    utils::U32ToBigEndian(&block[0], y);
+    utils::U32ToBigEndian(&block[4], z);
 }
 
 }  // namespace tc_tea
