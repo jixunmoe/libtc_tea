@@ -2,6 +2,7 @@
     "recommendations": [
         "xaver.clang-format",
         "sonarsource.sonarlint-vscode",
-        "ms-vscode.cpptools-extension-pack"
+        "ms-vscode.cpptools-extension-pack",
+        "notskm.clang-tidy"
     ]
 }

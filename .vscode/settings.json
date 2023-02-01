@@ -1,12 +1,14 @@
 {
   "C_Cpp.autoAddFileAssociations": false,
   "editor.formatOnSave": true,
+  "clang-tidy.buildPath": "build/",
   "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/compile_commands.json",
   "editor.rulers": [
     120
   ],
-  "files.exclude": {
-    "**/build/": true,
+  "search.exclude": {
+    "**/build": true,
+    "**/out": true
   },
   "sonarlint.rules": {
     // Don't suggest std::byte over other types.
