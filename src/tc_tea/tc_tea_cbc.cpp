@@ -39,6 +39,7 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
 
     if (cipher_len < TEA_MIN_CIPHER_TEXT_SIZE || *p_plain_len < cipher_len || cipher_len % 8 != 0)
     {
+        *p_plain_len = 0;
         return false;
     }
 
@@ -58,7 +59,7 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
     size_t end_loc = cipher_len - TEA_PADDING_ZERO_SIZE;
 
     auto decrypt_next_tea_block = [&](size_t copy_n) {
-        XorTeaBlock(&block[0], &p_cipher[0], &block[0]);
+        XorTeaBlock(&block[0], p_cipher, &block[0]);
         ECB_DecryptBlock(&block[0], &k[0]);
 
         size_t offset = 8 - copy_n;
@@ -128,8 +129,8 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     std::array<uint8_t, 8> next_iv2;
 
     auto p_cipher = cipher;
-    auto p_plain = plain;
-    auto p_plain_end = plain + plain_len - 8;
+    auto p_plain = plain + 8;
+    auto p_plain_end = plain + plain_len;
 
     auto encrypt_next_tea_block = [&](const uint8_t *p_src) {
         // XOR previous cipher block
@@ -150,7 +151,7 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
 
     // Process first 2 blocks
     size_t copy_n = std::min(16 - header_len, plain_len);
-    std::copy_n(p_plain, copy_n, &cipher[header_len]);
+    std::copy_n(plain, copy_n, &cipher[header_len]);
     p_plain += copy_n;
     std::fill(&cipher[header_len + copy_n], &cipher[16], 0);
 
@@ -164,7 +165,7 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     {
         while (p_plain < p_plain_end)
         {
-            encrypt_next_tea_block(p_plain);
+            encrypt_next_tea_block(&p_plain[-8]);
             p_plain += 8;
         }
 

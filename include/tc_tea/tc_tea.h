@@ -20,10 +20,7 @@ inline std::vector<uint8_t> CBC_Decrypt(std::vector<uint8_t> &cipher, const uint
 {
     size_t plain_len = cipher.size();
     std::vector<uint8_t> plain(plain_len);
-    if (!CBC_Decrypt(plain.data(), &plain_len, cipher.data(), plain_len, key))
-    {
-        return {};
-    }
+    CBC_Decrypt(plain.data(), &plain_len, cipher.data(), plain_len, key);
     plain.resize(plain_len);
     return plain;
 }
@@ -32,10 +29,7 @@ inline std::vector<uint8_t> CBC_Encrypt(std::vector<uint8_t> &plain, const uint8
 {
     size_t cipher_len = CBC_GetEncryptedSize(plain.size());
     std::vector<uint8_t> cipher(cipher_len);
-    if (!CBC_Encrypt(cipher.data(), &cipher_len, plain.data(), plain.size(), key))
-    {
-        return {};
-    }
+    CBC_Encrypt(cipher.data(), &cipher_len, plain.data(), plain.size(), key);
     cipher.resize(cipher_len);
     return cipher;
 }
