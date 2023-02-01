@@ -40,26 +40,25 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
 
     // decrypt first block
     std::array<uint8_t, 8> block;
-    std::array<uint8_t, 8> prev_block;
-    std::copy_n(cipher, 8, prev_block.begin());
+    std::copy_n(cipher, 8, block.begin());
 
     auto p_plain = plain;
     auto p_cipher = cipher;
     auto p_cipher_end = &cipher[cipher_len];
-    ECB_DecryptBlock(&prev_block[0], &k[0]);
+
+    ECB_DecryptBlock(&block[0], &k[0]);
     p_cipher += 8;
 
-    auto pad_size = static_cast<size_t>(prev_block[0] & uint8_t{0b0111});
+    auto pad_size = static_cast<size_t>(block[0] & uint8_t{0b0111});
     size_t start_loc = size_t{1} + pad_size + TEA_SALT_SIZE;
     size_t end_loc = cipher_len - TEA_PADDING_ZERO_SIZE;
 
     auto decrypt_next_tea_block = [&](size_t copy_n) {
-        XorRange<8>(&block[0], &p_cipher[0], &prev_block[0]);
+        XorRange<8>(&block[0], &p_cipher[0], &block[0]);
         ECB_DecryptBlock(&block[0], &k[0]);
 
         size_t offset = 8 - copy_n;
         XorRange<8>(p_plain, &block[offset], &p_cipher[-8 + offset]);
-        prev_block = block;
 
         p_cipher += 8;
         p_plain += copy_n;
@@ -73,7 +72,7 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
     else
     {
         size_t copy_n = 8 - start_loc;
-        std::copy_n(&prev_block[start_loc], copy_n, p_plain);
+        std::copy_n(&block[start_loc], copy_n, p_plain);
         p_plain += copy_n;
     }
 
