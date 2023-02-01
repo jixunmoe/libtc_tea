@@ -31,45 +31,67 @@ size_t CBC_GetEncryptedSize(size_t plain_size)
 bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, size_t cipher_len, const uint8_t *key)
 {
     std::array<uint32_t, 4> k;
-    utils::ParseBigEndianKey(&k[0], key);
+    ParseBigEndianKey(&k[0], key);
 
     if (cipher_len < TEA_MIN_CIPHER_TEXT_SIZE || *p_plain_len < cipher_len || cipher_len % 8 != 0)
     {
         return false;
     }
 
-    std::vector<uint8_t> plain_temp(cipher, cipher + cipher_len);
-
     // decrypt first block
-    ECB_DecryptBlock(&plain_temp[0], &k[0]);
-    for (size_t i = 8; i < cipher_len; i += 8)
-    {
-        // xor with previous block first
-        utils::XorRange<8>(&plain_temp[i], &plain_temp[i - 8]);
-        ECB_DecryptBlock(&plain_temp[i], &k[0]);
-    }
+    std::array<uint8_t, 8> block;
+    std::array<uint8_t, 8> prev_block;
+    std::copy_n(cipher, 8, prev_block.begin());
 
-    // Hint compiler that we are XOR block of 8.
-    for (size_t i = 8; i < cipher_len; i += 8)
-    {
-        utils::XorRange<8>(&plain_temp[i], &cipher[i - 8]);
-    }
+    auto p_plain = plain;
+    auto p_cipher = cipher;
+    auto p_cipher_end = &cipher[cipher_len];
+    ECB_DecryptBlock(&prev_block[0], &k[0]);
+    p_cipher += 8;
 
-    auto pad_size = static_cast<size_t>(plain_temp[0] & uint8_t{0b0111});
+    auto pad_size = static_cast<size_t>(prev_block[0] & uint8_t{0b0111});
     size_t start_loc = size_t{1} + pad_size + TEA_SALT_SIZE;
     size_t end_loc = cipher_len - TEA_PADDING_ZERO_SIZE;
+
+    auto decrypt_next_tea_block = [&](size_t copy_n) {
+        XorRange<8>(&block[0], &p_cipher[0], &prev_block[0]);
+        ECB_DecryptBlock(&block[0], &k[0]);
+
+        size_t offset = 8 - copy_n;
+        XorRange<8>(p_plain, &block[offset], &p_cipher[-8 + offset]);
+        prev_block = block;
+
+        p_cipher += 8;
+        p_plain += copy_n;
+    };
+
+    if (start_loc > 8)
+    {
+        size_t copy_n = 16 - start_loc;
+        decrypt_next_tea_block(copy_n);
+    }
+    else
+    {
+        size_t copy_n = 8 - start_loc;
+        std::copy_n(&prev_block[start_loc], copy_n, p_plain);
+        p_plain += copy_n;
+    }
+
+    while (p_cipher < p_cipher_end)
+    {
+        decrypt_next_tea_block(8);
+    }
 
     // Constant time zero check
     auto zero_padding_validation = uint8_t{0};
     for (size_t i = 0; i < TEA_PADDING_ZERO_SIZE; i++)
     {
-        zero_padding_validation |= plain_temp[end_loc + i];
+        zero_padding_validation |= plain[end_loc + i];
     }
 
     if (zero_padding_validation == uint8_t{0})
     {
         *p_plain_len = cipher_len - TEA_PADDING_ZERO_SIZE - start_loc;
-        std::copy(&plain_temp[start_loc], &plain_temp[end_loc], plain);
         return true;
     }
     else
@@ -82,7 +104,7 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
 bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, size_t plain_len, const uint8_t *key)
 {
     std::array<uint32_t, 4> k;
-    utils::ParseBigEndianKey(&k[0], key);
+    ParseBigEndianKey(&k[0], key);
 
     size_t pad_len = CBC_GetPaddingSize(plain_len);
     size_t cipher_len = CBC_GetEncryptedSize(plain_len);
@@ -95,7 +117,7 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     *p_cipher_len = cipher_len;
     size_t header_size = 1 + pad_len + TEA_SALT_SIZE;
 
-    utils::GenerateRandomBytes(cipher, header_size);
+    GenerateRandomBytes(cipher, header_size);
 
     cipher[0] = (cipher[0] & uint8_t{0b1111'1000}) | static_cast<uint8_t>(pad_len & 0b0000'0111);
     std::copy_n(plain, plain_len, &cipher[header_size]);
@@ -110,7 +132,7 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     for (size_t i = 8; i < cipher_len; i += 8)
     {
         // XOR previous cipher block
-        utils::XorRange<8>(&cipher[i], &cipher[i - 8]);
+        XorRange<8>(&cipher[i], &cipher[i - 8]);
 
         // store iv2
         std::copy_n(&cipher[i], 8, next_iv2.begin());
@@ -119,7 +141,7 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
         ECB_EncryptBlock(&cipher[i], &k[0]);
 
         // XOR iv2
-        utils::XorRange<8>(&cipher[i], &iv2[0]);
+        XorRange<8>(&cipher[i], &iv2[0]);
 
         iv2 = next_iv2;
     }

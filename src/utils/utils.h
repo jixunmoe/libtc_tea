@@ -1,26 +1,40 @@
 #pragma once
 
+#include "EndianHelper.h"
+
 #include <cstddef>
 #include <cstdint>
 
 #include <algorithm>
 #include <random>
 
-namespace tc_tea::utils
+namespace tc_tea
 {
+
+template <size_t N> inline void XorRange(uint8_t *dst, const uint8_t *src1, const uint8_t *src2)
+{
+    if (N == 8)
+    {
+        *reinterpret_cast<uint64_t *>(dst) =
+            *reinterpret_cast<const uint64_t *>(src1) ^ *reinterpret_cast<const uint64_t *>(src2);
+    }
+    else
+    {
+        for (size_t i = 0; i < N; i++)
+            dst[i] = src1[i] ^ src2[i];
+    }
+}
 
 template <size_t N> inline void XorRange(uint8_t *dst, const uint8_t *src)
 {
-    if constexpr (N == 8)
+    if (N == 8)
     {
         *reinterpret_cast<uint64_t *>(dst) ^= *reinterpret_cast<const uint64_t *>(src);
     }
     else
     {
         for (size_t i = 0; i < N; i++)
-        {
             dst[i] ^= src[i];
-        }
     }
 }
 
@@ -45,4 +59,4 @@ inline void GenerateRandomBytes(uint8_t *data, size_t n)
     }
 }
 
-} // namespace tc_tea::utils
+} // namespace tc_tea
