@@ -32,6 +32,19 @@ TEST(TC_TEA_CBC, BasicEncryptionTest)
         << "tc_tea_cbc test encryption/decryption failed: data mismatch";
 }
 
+TEST(TC_TEA_CBC, BasicEncryptionTestWithLongData)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {1,  2,  3,  4,  5,  6,  7,  8,  //
+                                  11, 12, 13, 14, 15, 16, 17, 18, //
+                                  31, 32, 33, 34, 35, 36, 37, 38};
+
+    auto cipher = tc_tea::CBC_Encrypt(plain, &key[0]);
+    auto actual_decrypted = tc_tea::CBC_Decrypt(cipher, &key[0]);
+    ASSERT_THAT(actual_decrypted, ElementsAreArray(plain))
+        << "tc_tea_cbc test encryption/decryption failed: data mismatch";
+}
+
 TEST(TC_TEA_CBC, BasicEncryptionTestWithShortPadding)
 {
     std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
@@ -43,4 +56,70 @@ TEST(TC_TEA_CBC, BasicEncryptionTestWithShortPadding)
     auto actual_decrypted = tc_tea::CBC_Decrypt(cipher, &key[0]);
     ASSERT_THAT(actual_decrypted, ElementsAreArray(plain))
         << "tc_tea_cbc test encryption/decryption failed: data mismatch";
+}
+
+TEST(TC_TEA_CBC, DecryptWithDirtyBuffer)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {0x11, 0x66, 0x22};
+    std::vector<uint8_t> cipher(16, 0xff);
+
+    size_t cipher_len = cipher.size();
+    tc_tea::CBC_Encrypt(cipher.data(), &cipher_len, plain.data(), plain.size(), key.data());
+    cipher.resize(cipher_len);
+    ASSERT_EQ(cipher.size(), 16);
+
+    auto actual_decrypted = tc_tea::CBC_Decrypt(cipher, key.data());
+    ASSERT_THAT(actual_decrypted, ElementsAreArray(plain))
+        << "tc_tea_cbc test encryption/decryption failed: data mismatch";
+}
+
+TEST(TC_TEA_CBC, ShouldWorkWithoutPadding)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {'1', '2', '3', '4', '5', '6'};
+
+    auto cipher = tc_tea::CBC_Encrypt(plain, key.data());
+    ASSERT_EQ(cipher.size(), 16);
+
+    auto actual_decrypted = tc_tea::CBC_Decrypt(cipher, key.data());
+    ASSERT_THAT(actual_decrypted, ElementsAreArray(plain))
+        << "tc_tea_cbc test encryption/decryption failed: data mismatch";
+}
+
+TEST(TC_TEA_CBC, ShouldRejectIfCipherBufferTooSmall)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {'1', '2', '3', '4', '5', '6'};
+    std::vector<uint8_t> cipher(10);
+
+    size_t cipher_len = cipher.size();
+    auto ok = tc_tea::CBC_Encrypt(cipher.data(), &cipher_len, plain.data(), plain.size(), key.data());
+
+    ASSERT_EQ(ok, false);
+    ASSERT_EQ(cipher_len, 16);
+}
+
+TEST(TC_TEA_CBC, ShouldRejectIfSizeMismatch)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {'1', '2', '3', '4', '5', '6'};
+
+    auto cipher = tc_tea::CBC_Encrypt(plain, key.data());
+    ASSERT_EQ(cipher.size(), 16);
+    cipher.pop_back();
+
+    ASSERT_EQ(tc_tea::CBC_Decrypt(cipher, key.data()).size(), 0);
+}
+
+TEST(TC_TEA_CBC, ShouldRejectIfZeroCheckFailed)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {'1', '2', '3', '4', '5', '6'};
+
+    auto cipher = tc_tea::CBC_Encrypt(plain, key.data());
+    ASSERT_EQ(cipher.size(), 16);
+    cipher[15] ^= 1;
+
+    ASSERT_EQ(tc_tea::CBC_Decrypt(cipher, key.data()).size(), 0);
 }

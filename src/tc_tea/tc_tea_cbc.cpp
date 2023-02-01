@@ -18,7 +18,11 @@ constexpr size_t TEA_MIN_CIPHER_TEXT_SIZE = 1 + TEA_SALT_SIZE + TEA_PADDING_ZERO
 inline size_t CBC_GetPaddingSize(size_t plain_size)
 {
     size_t len = TEA_MIN_CIPHER_TEXT_SIZE + plain_size;
-    return (8 - (len & 0b0111)) & 0b0111;
+    if (len % 8 == 0)
+    {
+        return 0;
+    }
+    return 8 - (len % 8);
 }
 
 size_t CBC_GetEncryptedSize(size_t plain_size)
@@ -54,11 +58,11 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
     size_t end_loc = cipher_len - TEA_PADDING_ZERO_SIZE;
 
     auto decrypt_next_tea_block = [&](size_t copy_n) {
-        XorRange<8>(&block[0], &p_cipher[0], &block[0]);
+        XorTeaBlock(&block[0], &p_cipher[0], &block[0]);
         ECB_DecryptBlock(&block[0], &k[0]);
 
         size_t offset = 8 - copy_n;
-        XorRange<8>(p_plain, &block[offset], &p_cipher[-8 + offset]);
+        XorTeaBlock(p_plain, &block[offset], &p_cipher[-8 + offset]);
 
         p_cipher += 8;
         p_plain += copy_n;
@@ -114,35 +118,59 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     }
 
     *p_cipher_len = cipher_len;
-    size_t header_size = 1 + pad_len + TEA_SALT_SIZE;
+    size_t header_len = 1 + pad_len + TEA_SALT_SIZE;
 
-    GenerateRandomBytes(cipher, header_size);
+    GenerateRandomBytes(cipher, header_len);
 
     cipher[0] = (cipher[0] & uint8_t{0b1111'1000}) | static_cast<uint8_t>(pad_len & 0b0000'0111);
-    std::copy_n(plain, plain_len, &cipher[header_size]);
 
-    // Process first block
     std::array<uint8_t, 8> iv2;
     std::array<uint8_t, 8> next_iv2;
 
-    std::copy_n(&cipher[0], 8, iv2.begin());
-    ECB_EncryptBlock(&cipher[0], &k[0]);
+    auto p_cipher = cipher;
+    auto p_plain = plain;
+    auto p_plain_end = plain + plain_len - 8;
 
-    for (size_t i = 8; i < cipher_len; i += 8)
-    {
+    auto encrypt_next_tea_block = [&](const uint8_t *p_src) {
         // XOR previous cipher block
-        XorRange<8>(&cipher[i], &cipher[i - 8]);
+        XorTeaBlock(p_cipher, p_src, &p_cipher[-8]);
 
         // store iv2
-        std::copy_n(&cipher[i], 8, next_iv2.begin());
+        std::copy_n(p_cipher, 8, next_iv2.begin());
 
         // TEA ECB
-        ECB_EncryptBlock(&cipher[i], &k[0]);
+        ECB_EncryptBlock(p_cipher, &k[0]);
 
         // XOR iv2
-        XorRange<8>(&cipher[i], &iv2[0]);
+        XorTeaBlock(p_cipher, &iv2[0]);
 
         iv2 = next_iv2;
+        p_cipher += 8;
+    };
+
+    // Process first 2 blocks
+    size_t copy_n = std::min(16 - header_len, plain_len);
+    std::copy_n(p_plain, copy_n, &cipher[header_len]);
+    p_plain += copy_n;
+    std::fill(&cipher[header_len + copy_n], &cipher[16], 0);
+
+    std::copy_n(p_cipher, 8, iv2.begin());
+    ECB_EncryptBlock(p_cipher, &k[0]);
+    p_cipher += 8;
+
+    encrypt_next_tea_block(p_cipher);
+
+    if (cipher_len > 16)
+    {
+        while (p_plain < p_plain_end)
+        {
+            encrypt_next_tea_block(p_plain);
+            p_plain += 8;
+        }
+
+        std::array<uint8_t, 8> buffer;
+        buffer[0] = plain[plain_len - 1];
+        encrypt_next_tea_block(buffer.data());
     }
 
     return true;

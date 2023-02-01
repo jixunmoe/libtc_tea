@@ -11,31 +11,15 @@
 namespace tc_tea
 {
 
-template <size_t N> inline void XorRange(uint8_t *dst, const uint8_t *src1, const uint8_t *src2)
+inline void XorTeaBlock(uint8_t *dst, const uint8_t *src1, const uint8_t *src2)
 {
-    if (N == 8)
-    {
-        *reinterpret_cast<uint64_t *>(dst) =
-            *reinterpret_cast<const uint64_t *>(src1) ^ *reinterpret_cast<const uint64_t *>(src2);
-    }
-    else
-    {
-        for (size_t i = 0; i < N; i++)
-            dst[i] = src1[i] ^ src2[i];
-    }
+    *reinterpret_cast<uint64_t *>(dst) =
+        *reinterpret_cast<const uint64_t *>(src1) ^ *reinterpret_cast<const uint64_t *>(src2);
 }
 
-template <size_t N> inline void XorRange(uint8_t *dst, const uint8_t *src)
+inline void XorTeaBlock(uint8_t *dst, const uint8_t *src)
 {
-    if (N == 8)
-    {
-        *reinterpret_cast<uint64_t *>(dst) ^= *reinterpret_cast<const uint64_t *>(src);
-    }
-    else
-    {
-        for (size_t i = 0; i < N; i++)
-            dst[i] ^= src[i];
-    }
+    *reinterpret_cast<uint64_t *>(dst) ^= *reinterpret_cast<const uint64_t *>(src);
 }
 
 inline void ParseBigEndianKey(uint32_t *result, const uint8_t *key)
