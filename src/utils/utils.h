@@ -28,7 +28,7 @@ inline void ParseBigEndianKey(uint32_t *result, const uint8_t *key)
 {
     for (int i = 0; i < 4; i++)
     {
-        result[i] = utils::BigEndianToU32(&key[i * sizeof(uint32_t)]);
+        result[i] = BigEndianToU32(&key[i * sizeof(uint32_t)]);
     }
 }
 
