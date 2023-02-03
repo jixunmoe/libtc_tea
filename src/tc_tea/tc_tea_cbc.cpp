@@ -56,7 +56,6 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
 
     auto pad_size = static_cast<size_t>(block[0] & uint8_t{0b0111});
     size_t start_loc = size_t{1} + pad_size + TEA_SALT_SIZE;
-    size_t end_loc = cipher_len - TEA_PADDING_ZERO_SIZE;
 
     auto decrypt_next_tea_block = [&](size_t copy_n) {
         XorTeaBlock(&block[0], p_cipher, &block[0]);
@@ -85,17 +84,18 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
     {
         decrypt_next_tea_block(8);
     }
+    p_plain -= TEA_PADDING_ZERO_SIZE;
 
     // Constant time zero check
     auto zero_padding_validation = uint8_t{0};
     for (size_t i = 0; i < TEA_PADDING_ZERO_SIZE; i++)
     {
-        zero_padding_validation |= plain[end_loc + i];
+        zero_padding_validation |= p_plain[i];
     }
 
     if (zero_padding_validation == uint8_t{0})
     {
-        *p_plain_len = cipher_len - TEA_PADDING_ZERO_SIZE - start_loc;
+        *p_plain_len = p_plain - plain;
         return true;
     }
     else
@@ -110,7 +110,6 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     std::array<uint32_t, 4> k;
     ParseBigEndianKey(&k[0], key);
 
-    size_t pad_len = CBC_GetPaddingSize(plain_len);
     size_t cipher_len = CBC_GetEncryptedSize(plain_len);
     if (cipher_len > *p_cipher_len)
     {
@@ -119,6 +118,8 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
     }
 
     *p_cipher_len = cipher_len;
+
+    size_t pad_len = CBC_GetPaddingSize(plain_len);
     size_t header_len = 1 + pad_len + TEA_SALT_SIZE;
 
     GenerateRandomBytes(cipher, header_len);
@@ -169,7 +170,7 @@ bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, si
             p_plain += 8;
         }
 
-        std::array<uint8_t, 8> buffer;
+        std::array<uint8_t, 8> buffer{};
         buffer[0] = plain[plain_len - 1];
         encrypt_next_tea_block(buffer.data());
     }

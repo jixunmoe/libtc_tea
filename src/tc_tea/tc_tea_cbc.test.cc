@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -7,6 +8,8 @@
 #include <vector>
 
 using ::testing::ElementsAreArray;
+
+// NOLINTBEGIN(*-avoid-magic-numbers)
 
 TEST(TC_TEA_CBC, BasicDecryptionTest)
 {
@@ -74,6 +77,29 @@ TEST(TC_TEA_CBC, DecryptWithDirtyBuffer)
         << "tc_tea_cbc test encryption/decryption failed: data mismatch";
 }
 
+TEST(TC_TEA_CBC, DecryptWithLargeDirtyBuffer)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain(100, 0xff);
+    std::vector<uint8_t> cipher(116, 0xff);
+
+    size_t cipher_len = cipher.size();
+    tc_tea::CBC_Encrypt(cipher.data(), &cipher_len, plain.data(), plain.size(), key.data());
+    ASSERT_EQ(cipher_len, 112);
+
+    cipher.resize(cipher_len + 100);
+    std::fill(cipher.begin() + cipher_len, cipher.end(), 0xcc);
+
+    auto actually_decrypted = cipher;
+    size_t plain_len = cipher_len;
+    tc_tea::CBC_Decrypt(actually_decrypted.data(), &plain_len, cipher.data(), cipher_len, key.data());
+    ASSERT_EQ(plain_len, 100);
+    actually_decrypted.resize(plain_len);
+
+    ASSERT_THAT(actually_decrypted, ElementsAreArray(plain))
+        << "tc_tea_cbc test encryption/decryption failed: data mismatch";
+}
+
 TEST(TC_TEA_CBC, ShouldWorkWithoutPadding)
 {
     std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
@@ -123,3 +149,27 @@ TEST(TC_TEA_CBC, ShouldRejectIfZeroCheckFailed)
 
     ASSERT_EQ(tc_tea::CBC_Decrypt(cipher, key.data()).size(), 0);
 }
+
+TEST(TC_TEA_CBC, ShouldWorkEncryptingSingleByte)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {'1'};
+
+    auto cipher = tc_tea::CBC_Encrypt(plain, key.data());
+    ASSERT_EQ(cipher.size(), 16);
+    auto actually_decrypted = tc_tea::CBC_Decrypt(cipher, key.data());
+    ASSERT_THAT(actually_decrypted, ElementsAreArray(plain));
+}
+
+TEST(TC_TEA_CBC, ShouldWorkEncryptingEmptyBuffer)
+{
+    std::vector<uint8_t> key = {'1', '2', '3', '4', '5', '6', '7', '8', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
+    std::vector<uint8_t> plain = {};
+
+    auto cipher = tc_tea::CBC_Encrypt(plain, key.data());
+    ASSERT_EQ(cipher.size(), 16);
+    auto actually_decrypted = tc_tea::CBC_Decrypt(cipher, key.data());
+    ASSERT_THAT(actually_decrypted, ElementsAreArray(plain));
+}
+
+// NOLINTEND(*-avoid-magic-numbers)
