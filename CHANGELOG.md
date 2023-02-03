@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dropped requirement of C++20 to C++17.
 - **BREAKING** API changed - raw API fallback to pointers, while vector API takes a vector instead of span.
 
-## [0.1.0] - 2022-12-29
+## [0.1.0] - 2023-02-01
 
 ### Added
 
