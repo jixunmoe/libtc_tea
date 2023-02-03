@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(tc_tea VERSION 0.1.2 LANGUAGES CXX)
+project(tc_tea VERSION 0.1.3 LANGUAGES CXX)
 
 option(TC_TEA_BUILD_TESTING "Build library tests" ON)
 
