@@ -5,6 +5,8 @@
 namespace tc_tea
 {
 
+// NOLINTBEGIN(*-magic-numbers)
+
 inline uint32_t BigEndianToU32(const uint8_t *bytes)
 {
     return (static_cast<uint32_t>(bytes[0]) << 0x18) | (static_cast<uint32_t>(bytes[1]) << 0x10) |
@@ -18,5 +20,7 @@ inline void U32ToBigEndian(uint8_t *bytes, uint32_t value)
     bytes[2] = static_cast<uint8_t>(value >> 0x08);
     bytes[3] = static_cast<uint8_t>(value >> 0x00);
 }
+
+// NOLINTEND(*-magic-numbers)
 
 } // namespace tc_tea
