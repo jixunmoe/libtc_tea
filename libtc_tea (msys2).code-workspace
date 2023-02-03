@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.autoAddFileAssociations": false,
+		"cmake.cmakePath": "c:/msys64/ucrt64/bin/cmake.exe",
+		"clangd.path": "c:/msys64/ucrt64/bin/clangd.exe",
+		"clangd.arguments": [
+			"-background-index",
+			"-compile-commands-dir=${workspaceFolder}/build"
+		]
+	}
+}
