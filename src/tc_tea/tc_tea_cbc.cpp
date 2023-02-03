@@ -15,7 +15,7 @@ namespace tc_tea
 constexpr size_t kTeaBlockSize = sizeof(uint32_t) * 2;
 constexpr size_t TEA_SALT_SIZE = 2;
 constexpr size_t TEA_PADDING_ZERO_SIZE = 7;
-constexpr size_t TEA_MIN_CIPHER_TEXT_SIZE = 1 + TEA_SALT_SIZE + TEA_PADDING_ZERO_SIZE;
+constexpr size_t TEA_MIN_CIPHER_TEXT_SIZE = 1 + TEA_SALT_SIZE + 0b0111 /* padding*/;
 
 inline size_t CBC_GetPaddingSize(size_t cipher_text_size)
 {
@@ -39,7 +39,7 @@ bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, siz
     std::array<uint32_t, 4> key_be{};
     ParseBigEndianKey(key_be.data(), key);
 
-    if (cipher_len < TEA_MIN_CIPHER_TEXT_SIZE || *p_plain_len < cipher_len || cipher_len % 8 != 0)
+    if (cipher_len < TEA_MIN_CIPHER_TEXT_SIZE || *p_plain_len < cipher_len || cipher_len % kTeaBlockSize != 0)
     {
         *p_plain_len = 0;
         return false;
