@@ -16,7 +16,7 @@ size_t CBC_GetEncryptedSize(size_t cipher_text_size);
 bool CBC_Decrypt(uint8_t *plain, size_t *p_plain_len, const uint8_t *cipher, size_t cipher_len, const uint8_t *key);
 bool CBC_Encrypt(uint8_t *cipher, size_t *p_cipher_len, const uint8_t *plain, size_t plain_len, const uint8_t *key);
 
-inline std::vector<uint8_t> CBC_Decrypt(std::vector<uint8_t> &cipher, const uint8_t *key)
+inline std::vector<uint8_t> CBC_Decrypt(const std::vector<uint8_t> &cipher, const uint8_t *key)
 {
     size_t plain_len = cipher.size();
     std::vector<uint8_t> plain(plain_len);
@@ -25,7 +25,7 @@ inline std::vector<uint8_t> CBC_Decrypt(std::vector<uint8_t> &cipher, const uint
     return plain;
 }
 
-inline std::vector<uint8_t> CBC_Encrypt(std::vector<uint8_t> &plain, const uint8_t *key)
+inline std::vector<uint8_t> CBC_Encrypt(const std::vector<uint8_t> &plain, const uint8_t *key)
 {
     size_t cipher_len = CBC_GetEncryptedSize(plain.size());
     std::vector<uint8_t> cipher(cipher_len);
