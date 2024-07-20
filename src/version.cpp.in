@@ -1,9 +1,0 @@
-#include "tc_tea/version.h"
-
-const char* tc_tea::get_version() {
-  return "@PROJECT_VERSION@";
-}
-
-const char* tc_tea::get_full_version() {
-  return "@PROJECT_VERSION@ (git-@LIBPARAKEET_GIT_COMMIT_HASH@, @LIBPARAKEET_GIT_COMMIT_DATE@)";
-}

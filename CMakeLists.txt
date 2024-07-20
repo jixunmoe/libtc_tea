@@ -1,87 +1,77 @@
 cmake_minimum_required(VERSION 3.21)
-project(tc_tea VERSION 0.1.3 LANGUAGES CXX)
+set(tc_tea_VERSION 0.2.0)
+project(tc-tea VERSION ${tc_tea_VERSION} LANGUAGES C CXX)
 
-option(TC_TEA_BUILD_TESTING "Build library tests" ON)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+include(FetchContent)
 
-find_program(CCACHE_TOOL_PATH ccache) # Optional
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
+option(TC_TEA_BUILD_TEST "Build library tests" ON)
+option(TC_TEA_BUILD_INSECURE "Build extra, insecure version of CBC encrypt method" ON)
 
-include(cmake/CPM-Loader.cmake)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 include(cmake/git-info.cmake)
 
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS YES CACHE BOOL "Export all symbols")
-
-configure_file (
-    "${PROJECT_SOURCE_DIR}/src/version.cpp.in"
-    "${PROJECT_BINARY_DIR}/src/version.cpp"
-    @ONLY
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/tc_tea/version.h.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/tc_tea/version.h"
+        @ONLY
 )
 
-file(GLOB_RECURSE SOURCES
-  "src/*.h"
-  "src/*.cpp"
-  "${PROJECT_BINARY_DIR}/src/*.h"
-  "${PROJECT_BINARY_DIR}/src/*.cpp"
+set(SOURCES
+        tc_tea/ecb.c
+        tc_tea/cbc_encrypt.c
+        tc_tea/cbc_decrypt.c
 )
 
-# Add source to this project's executable.
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
-add_library("JixunMoe::LibTcTEA" ALIAS ${PROJECT_NAME})
-
-target_include_directories(${PROJECT_NAME}
-  PUBLIC
-    $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  PRIVATE
-    src
-    "${PROJECT_BINARY_DIR}/src"
+if (BUILD_SHARED_LIBS)
+    add_library(tc_tea SHARED ${SOURCES})
+    target_compile_definitions(tc_tea PRIVATE TC_TEA_BUILD_SHARED)
+else ()
+    add_library(tc_tea STATIC ${SOURCES})
+    target_compile_definitions(tc_tea PRIVATE TC_TEA_BUILD_STATIC)
+endif ()
+if (TC_TEA_BUILD_INSECURE)
+    target_compile_definitions(tc_tea PRIVATE TC_TEA_BUILD_INSECURE)
+endif ()
+target_include_directories(tc_tea
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_definitions(tc_tea PRIVATE TC_TEA_BUILDING_LIBRARY)
 
-include(GNUInstallDirs)
-set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+add_library(JixunMoe::tc_tea ALIAS tc_tea)
+install(TARGETS tc_tea
+        EXPORT tc_tea-targets
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-install(TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}-targets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-set_target_properties(${PROJECT_NAME} PROPERTIES EXPORT_NAME LibTcTea)
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(EXPORT ${PROJECT_NAME}-targets
-  FILE
-    LibTcTeaTargets.cmake
-  NAMESPACE
-    LibTcTea::
-  DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-)
+# Install
 
-# Tests!
-if(TC_TEA_BUILD_TESTING)
-  enable_testing()
-  CPMAddPackage(
-    NAME googletest
-    GITHUB_REPOSITORY google/googletest
-    GIT_TAG release-1.12.1
-    VERSION 1.12.1
-    OPTIONS
-        "INSTALL_GTEST OFF"
-        "gtest_force_shared_crt ON"
-  )
 
-  file(GLOB_RECURSE TESTS_SOURCE src/*.test.cc src/*.test.hh)
-  add_executable(${PROJECT_NAME}_test ${TESTS_SOURCE})
-  target_include_directories(${PROJECT_NAME}_test PRIVATE src)
-  target_compile_features(${PROJECT_NAME}_test PRIVATE cxx_std_17)
-  target_link_libraries(${PROJECT_NAME}_test 
-    GTest::gmock
-    GTest::gtest
-    GTest::gmock_main
-    GTest::gtest_main
-    ${PROJECT_NAME}
-  )
-
-  include(GoogleTest)
-  gtest_discover_tests(${PROJECT_NAME}_test)
-endif()
+# Testing
+if (TC_TEA_BUILD_TEST)
+    FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.15.0
+    )
+    FetchContent_MakeAvailable(googletest)
+    enable_testing()
+    add_executable(tc_tea_test
+            tc_tea/ecb.test.cc
+            tc_tea/cbc.test.cc
+    )
+    target_link_libraries(
+            tc_tea_test
+            tc_tea
+            gtest_main
+            gmock_main
+    )
+    add_test(NAME tc_tea_test COMMAND tc_tea_test)
+endif ()

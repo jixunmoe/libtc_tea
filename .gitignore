@@ -1,3 +1,5 @@
 build/
 build-*/
 .cache/
+include/tc_tea/version.h
+cmake-build-*

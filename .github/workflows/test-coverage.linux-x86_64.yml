@@ -10,6 +10,7 @@ on:
   schedule:
     # Build once every fortnight
     - cron: "10 4 1,15 * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,7 +21,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     env:
-      CXX: g++-11
+      CC: gcc-11
 
     steps:
       - name: "⏳ Clone repo..."
