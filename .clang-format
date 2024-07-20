@@ -1,5 +1,4 @@
----
-BasedOnStyle: Microsoft
-UseTab: Never
+BasedOnStyle: Chromium
 TabWidth: 4
+InsertNewlineAtEOF: true
 ColumnLimit: 120

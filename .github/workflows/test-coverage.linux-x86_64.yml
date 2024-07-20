@@ -20,7 +20,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     env:
-      CXX: g++-11
+      CC: gcc-11
 
     steps:
       - name: "⏳ Clone repo..."
