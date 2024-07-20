@@ -44,6 +44,27 @@ TEST(TC_TEA_CBC, EncryptionTest) {
   EXPECT_THAT(std::span(cipher.cbegin(), cipher.cbegin() + 24), ::testing::ElementsAreArray(expected_cipher));
 }
 
+TEST(TC_TEA_CBC, LongerEncryption) {
+  std::array<uint8_t, 100> cipher{};
+  std::vector<uint8_t> plain = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l',
+                                'd', ' ', 'p', 'a', 'r', 'a', 'k', 'e', 'e', 't'};
+  std::array<uint8_t, 16> salt = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  std::array<uint32_t, 4> tea_key{};
+  std::array<uint8_t, 32> expected_cipher{
+      0xDC, 0x5B, 0xD4, 0x95, 0x97, 0x6E, 0xE0, 0xCE, 0x54, 0x15, 0xE3, 0x92, 0x2E, 0xEB, 0xCF, 0x1A,
+      0x88, 0x10, 0x85, 0x83, 0xC7, 0xBE, 0x4F, 0xE0, 0x17, 0x79, 0x64, 0x19, 0xEF, 0x99, 0x13, 0x21,
+  };
+  tc_tea_parse_key(tea_key.data(), (const uint8_t*)"12345678ABCDEFGH");
+
+  size_t cipher_len = tc_tea_cbc_get_cipher_len(plain.size());
+  EXPECT_EQ(cipher_len, expected_cipher.size());
+  size_t written_len = tc_tea_cbc_encrypt(cipher.data(), plain.data(), plain.size(), tea_key.data(), salt.data());
+  EXPECT_EQ(written_len, expected_cipher.size());
+
+  EXPECT_THAT(std::span(cipher.cbegin(), cipher.cbegin() + expected_cipher.size()),
+              ::testing::ElementsAreArray(expected_cipher));
+}
+
 TEST(tc_tea_cbc_decrypt, empty_buffer) {
   std::array<uint8_t, 16> cipher{
       0x64, 0xe2, 0xa2, 0xa5, 0xcd, 0xa9, 0xdc, 0x59, 0xcc, 0x46, 0x95, 0x86, 0x9a, 0xb4, 0x46, 0x60,
