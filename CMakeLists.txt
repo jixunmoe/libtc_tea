@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-set(tc_tea_VERSION 0.2.0)
+set(tc_tea_VERSION 0.2.1)
 project(tc-tea VERSION ${tc_tea_VERSION} LANGUAGES C CXX)
 
 include(CMakePackageConfigHelpers)
@@ -8,7 +8,7 @@ include(FetchContent)
 
 option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 option(TC_TEA_BUILD_TEST "Build library tests" ON)
-option(TC_TEA_BUILD_INSECURE "Build extra, insecure version of CBC encrypt method" ON)
+option(TC_TEA_BUILD_INSECURE "Build extra, insecure version of CBC encrypt method" OFF)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
@@ -43,15 +43,14 @@ target_include_directories(tc_tea
 target_compile_definitions(tc_tea PRIVATE TC_TEA_BUILDING_LIBRARY)
 
 add_library(JixunMoe::tc_tea ALIAS tc_tea)
+
+# Install
 install(TARGETS tc_tea
         EXPORT tc_tea-targets
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-
-# Install
 
 
 # Testing

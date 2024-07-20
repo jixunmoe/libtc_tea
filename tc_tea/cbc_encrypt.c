@@ -1,9 +1,9 @@
 #include "tc_tea/tc_tea.h"
 
+#include <assert.h>
 #include <memory.h>
 
 #ifdef TC_TEA_BUILD_INSECURE
-#include <assert.h>
 #include <stdlib.h>
 #endif
 
