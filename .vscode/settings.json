@@ -15,5 +15,7 @@
     "cpp:S6022": {
       "level": "off"
     }
-  }
+  },
+  "gtest-adapter.debugConfig": "Debug",
+  "gtest-adapter.supportLocation": true
 }
