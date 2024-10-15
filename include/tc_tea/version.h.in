@@ -1,9 +1,9 @@
 // This file was generated from "version.h.in".
 
 static inline const char* tc_tea_get_version() {
-  return "@PROJECT_VERSION@";
+    return "@PROJECT_VERSION@";
 }
 
 static inline const char* tc_tea_get_full_version() {
-  return "@PROJECT_VERSION@ (commit='@LIB_TC_TEA_COMMIT_HASH@', date='@LIB_TC_TEA_COMMIT_DATE@')";
+    return "@PROJECT_VERSION@ (commit='@LIB_TC_TEA_COMMIT_HASH@', date='@LIB_TC_TEA_COMMIT_DATE@')";
 }

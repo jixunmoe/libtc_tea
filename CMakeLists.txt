@@ -21,9 +21,7 @@ configure_file(
 )
 
 set(SOURCES
-        tc_tea/ecb.c
-        tc_tea/cbc_encrypt.c
-        tc_tea/cbc_decrypt.c
+        tc_tea/cbc.c
 )
 
 if (BUILD_SHARED_LIBS)
